@@ -19,7 +19,7 @@ __inline__ divmod_t divmod(uint32_t dividend, uint32_t divisor) {
 
 uint32_t get_mem_size(atag_t * tag) {
 (void) tag;
-return 1024 * 1024  * 128;
+return 1024 * 1024  * 1024;
 //this is fine if atags are passed by bootloader, whic apperently neither 
 //QEMU nor some acutal raspis do
 //so we just return 1gb  memsize manually.

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "common/stdlib.h"
 #include "kernel/mem.h"
-
+#include "kernel/uart.h"
 
 typedef struct{
     uint8_t allocated: 1;
@@ -27,7 +27,7 @@ static page_t * all_pages_array; //points to the page metadata array
 page_list_t free_pages; //the pages that are currently free
 
 void mem_init (atag_t * atags){
-    uint32_t mem_size, page_array_len, kernel_pages, i;
+    uint32_t mem_size, page_array_len, kernel_pages, page_array_end, i;
 
     mem_size = get_mem_size(atags);
     num_pages = mem_size / PAGE_SIZE;
@@ -37,6 +37,9 @@ void mem_init (atag_t * atags){
     bzero(all_pages_array,page_array_len);
     INITIALIZE_LIST(free_pages);
 
+	page_array_end = (uint32_t)all_pages_array + page_array_len;
+	page_array_end += page_array_end % PAGE_SIZE  ? PAGE_SIZE- (page_array_end % PAGE_SIZE) : 0;
+
     kernel_pages = ((uint32_t)&__end) /PAGE_SIZE;
     for(i = 0; i < kernel_pages; i++){
         all_pages_array[i].vaddr_mapped = i * PAGE_SIZE;
@@ -45,10 +48,13 @@ void mem_init (atag_t * atags){
     }
 
     for(; i < num_pages;  i++){
-        all_pages_array[i].vaddr_mapped = i * PAGE_SIZE;
+        //all_pages_array[i].vaddr_mapped = i * PAGE_SIZE;
         all_pages_array[i].flags.allocated =  0;
+        //all_pages_array[i].flags.kernel_page = 0;
         append_page_list(&free_pages, &all_pages_array[i]);
     }
+    
+    heap_init(page_array_end);
 }
 
 void * alloc_page(void) {
@@ -87,7 +93,7 @@ void free_page(void * ptr) {
 /**
  * Heap Stuff
  */
-static void heap_init(uint32_t heap_start);
+
 /**
  * impliment kmalloc as a linked list of allocated segments.
  * Segments should be 4 byte aligned.
@@ -132,9 +138,10 @@ void * kmalloc(uint32_t bytes) {
     }
 
     // There must be no free memory right now :(
-    if (best == NULL)
+    if (best == NULL){
+    	uart_puts("NO free memory\n");
         return NULL;
-
+	}
     // If the best difference we could come up with was large, split up this segment into two.
     // Since our segment headers are rather large, the criterion for splitting the segment is that
     // when split, the segment not being requested should be twice a header size

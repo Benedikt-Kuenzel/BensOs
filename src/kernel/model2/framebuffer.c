@@ -20,12 +20,13 @@ int framebuffer_init(void) {
     tags[2].value_buffer.fb_bits_per_pixel = COLORDEPTH;
     tags[3].proptag = NULL_TAG;
 
-
+uart_puts("First call \n");
     // Send over the initialization
     if (send_messages(tags) != 0) {
         return -1;
     }
 
+    
     fbinfo.width = tags[0].value_buffer.fb_screen_size.width;
     fbinfo.height = tags[0].value_buffer.fb_screen_size.height;
     fbinfo.chars_width = fbinfo.width / CHAR_WIDTH;

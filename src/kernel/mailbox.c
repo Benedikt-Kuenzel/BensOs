@@ -80,9 +80,11 @@ int send_messages(property_message_tag_t * tags) {
     bufsize += (bufsize % 16) ? 16 - (bufsize % 16) : 0;
 
     msg = kmalloc(bufsize);
-    if (!msg)
+    if (msg == NULL)
+    {
+    uart_puts("!msg \n");
         return -1;
-
+    }
     msg->size = bufsize;
     msg->req_res_code = REQUEST;
 
@@ -107,11 +109,13 @@ int send_messages(property_message_tag_t * tags) {
 
     if (msg->req_res_code == REQUEST) {
         kfree(msg);
+        uart_puts("Res = REQUEST \n");
         return 1;
     }
     // Check the response code
     if (msg->req_res_code == RESPONSE_ERROR) {
         kfree(msg);
+        uart_puts("REST = RESPONSE-ERROR \n");
         return 2;
     }
 
