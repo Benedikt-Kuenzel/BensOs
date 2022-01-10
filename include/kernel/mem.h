@@ -10,6 +10,5 @@ void * alloc_page(void);
 void free_page(void * ptr);
 void * kmalloc(uint32_t bytes);
 void kfree(void *ptr);
-static void heap_init(uint32_t heap_start);
 
 #endif

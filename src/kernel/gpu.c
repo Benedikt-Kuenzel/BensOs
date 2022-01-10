@@ -5,6 +5,7 @@
 #include <kernel/mailbox.h>
 #include <kernel/chars_pixels.h>
 #include <common/stdlib.h>
+#include <kernel/uart.h>
 
 
 
@@ -20,23 +21,25 @@ void gpu_putc(char c) {
     uint8_t mask;
     const uint8_t * bmp = font(c);
     uint32_t i, num_rows = fbinfo.height/CHAR_HEIGHT;
-
+uart_puts("Shift\n");
     // shift everything up one row
     if (fbinfo.chars_y >= num_rows) {
         // Copy a whole character row into the one above it
-        for (i = 0; i < num_rows-1; i++)
+        for (i = 0; i < num_rows-1; i++){
             memcpy(fbinfo.buf + fbinfo.pitch*i*CHAR_HEIGHT, fbinfo.buf + fbinfo.pitch*(i+1)*CHAR_HEIGHT, fbinfo.pitch * CHAR_HEIGHT);
+        }
+           
         // zero out the last row
         bzero(fbinfo.buf + fbinfo.pitch*i*CHAR_HEIGHT,fbinfo.pitch * CHAR_HEIGHT);
         fbinfo.chars_y--;
     }
-
+uart_puts("Newline\n");
     if (c == '\n') {
         fbinfo.chars_x = 0;
         fbinfo.chars_y++;
         return;
     }
-
+uart_puts("Char drawing\n");
     for(w = 0; w < CHAR_WIDTH; w++) {
         for(h = 0; h < CHAR_HEIGHT; h++) {
             mask = 1 << (w);
@@ -46,7 +49,7 @@ void gpu_putc(char c) {
                 write_pixel(fbinfo.chars_x*CHAR_WIDTH + w, fbinfo.chars_y*CHAR_HEIGHT + h, &BLACK);
         }
     }
-
+uart_puts("Char info\n");
     fbinfo.chars_x++;
     if (fbinfo.chars_x > fbinfo.chars_width) {
         fbinfo.chars_x = 0;
@@ -61,12 +64,13 @@ void gpu_puts(const char* str)
 }
 
 void gpu_init(void) {
-    static const pixel_t BLACK = {0x00, 0x00, 0x00};
+    static const pixel_t BLACK = {0xff, 0xff, 0xff};//{0x00, 0x00, 0x00};
     // Aparantly, this sometimes does not work, so try in a loop
     while(framebuffer_init());
 
     // clear screen
     for (uint32_t j = 0; j < fbinfo.height; j++) {
+        
         for (uint32_t i = 0; i < fbinfo.width; i++) {
             write_pixel(i,j,&BLACK);
         }

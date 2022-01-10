@@ -14,18 +14,21 @@ mail_message_t mailbox_read(int channel) {
     mail_status_t stat;
     mail_message_t res;
 
-    // Make sure that the message is from the right channel
-    do {
-        // Make sure there is mail to recieve
-        do {
-            stat = *MAIL0_STATUS;
-            
-        } while (stat.empty);
+    do{
+       // Make sure there is mail to recieve
+       do {
+           stat = *((mail_status_t *) 0x3F000000 + 0xB880 + 0x18);
+       } while (stat.empty);
+       // Get the message
+//TODO: CHECK IF CHANNEL IS CORRECT
 
-        // Get the message
-        res = *MAIL0_READ;
+        res = *((mail_message_t *) 0x3F000000 + 0xB880);
+
     } while (res.channel != channel);
 
+
+        uart_puts("received\n"); 
+        uart_puts(res); 
     return res;
 }
 
@@ -34,16 +37,13 @@ void mailbox_send(mail_message_t msg, int channel) {
     msg.channel = channel;
     
 
-    stat = *MAIL0_STATUS;
-
-     // Make sure you can send mail    
-    while(stat.full){
-        uart_puts("!msg \n"); 
-        stat = *MAIL0_STATUS;
-    }
- 
+    // Make sure you can send mail
+    do {
+        stat = *((mail_status_t *) 0x3F000000 + 0xB880 + 0x18);
+    } while (stat.full);
     // send the message
-    *MAIL0_WRITE = msg;
+    *((mail_message_t *) 0x3F000000 + 0xB880 + 0x20) = msg;
+    uart_puts("sent \n"); 
 }
 
 /**

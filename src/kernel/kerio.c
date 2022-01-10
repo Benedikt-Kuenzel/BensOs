@@ -11,8 +11,9 @@ char getc(void) {
 }
 
 void putc(char c) {
-    gpu_putc(c);
     uart_putc(c);
+    
+    gpu_putc(c);
 }
 
 void puts(const char * str) {
