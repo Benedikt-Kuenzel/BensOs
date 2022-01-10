@@ -19,6 +19,7 @@ mail_message_t mailbox_read(int channel) {
         // Make sure there is mail to recieve
         do {
             stat = *MAIL0_STATUS;
+            
         } while (stat.empty);
 
         // Get the message
@@ -33,11 +34,14 @@ void mailbox_send(mail_message_t msg, int channel) {
     msg.channel = channel;
     
 
-    // Make sure you can send mail
-    do {
-        stat = *MAIL0_STATUS;
-    } while (stat.full);
+    stat = *MAIL0_STATUS;
 
+     // Make sure you can send mail    
+    while(stat.full){
+        uart_puts("!msg \n"); 
+        stat = *MAIL0_STATUS;
+    }
+ 
     // send the message
     *MAIL0_WRITE = msg;
 }

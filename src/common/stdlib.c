@@ -1,4 +1,7 @@
 #include "common/stdlib.h"
+#include "kernel/gpu.h"
+#include "kernel/uart.h"
+
 
 typedef struct{
     uint32_t div;
@@ -179,3 +182,4 @@ int atoi(char * num) {
 
     return res;
 }
+

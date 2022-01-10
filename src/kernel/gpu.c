@@ -54,6 +54,12 @@ void gpu_putc(char c) {
     }
 }
 
+void gpu_puts(const char* str)
+{
+    for (size_t i = 0; str[i] != '\0'; i ++)
+        gpu_putc((unsigned char)str[i]);
+}
+
 void gpu_init(void) {
     static const pixel_t BLACK = {0x00, 0x00, 0x00};
     // Aparantly, this sometimes does not work, so try in a loop

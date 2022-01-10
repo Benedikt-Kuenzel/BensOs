@@ -19,8 +19,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags)
     mem_init((atag_t *)atags);
     gpu_init();
 
-    uart_puts("Booted.\n");
-    uart_puts("Welcome to Ben's OS!\n");
+    puts("Booted.\n");
+    puts("Welcome to Ben's OS!\n");
+    
+
     while (1) {
         uart_putc(uart_getc());
         uart_putc('\n');
