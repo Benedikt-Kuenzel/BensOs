@@ -1,0 +1,6 @@
+#Compile:
+in /build gerade "make" ausführen.
+
+#Compile and Run:
+in /build gerade "make run" ausführen.
+
