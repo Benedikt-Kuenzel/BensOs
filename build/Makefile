@@ -52,8 +52,11 @@ $(OBJ_DIR)/%.o: $(COMMON_SRC)/%.c
 	$(CC) $(CFLAGS) -I$(KER_SRC) -I$(KER_HEAD) -c $< -o $@ $(CSRCFLAGS)
 
 clean:
+	setlocal enableextensions
 	rm -rf $(OBJ_DIR)
-	rm $(IMG_NAME)
+	if exist "$(IMG_NAME)" rm $(IMG_NAME)
+	mkdir $(OBJ_DIR)
+	mkdir $(OBJ_DIR)\$(ARCHDIR)
 
 run: build
 	qemu-system-arm -m 1024 -no-reboot -M raspi2b -serial stdio -kernel kernel.img
