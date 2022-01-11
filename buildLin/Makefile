@@ -56,4 +56,4 @@ clean:
 	rm $(IMG_NAME)
 
 run: build
-	qemu-system-arm -m 128 -no-reboot -M raspi2 -serial stdio -kernel kernel.img
+	qemu-system-arm -m 1024 -no-reboot -M raspi2 -serial stdio -kernel kernel.img 

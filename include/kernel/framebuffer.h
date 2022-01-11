@@ -9,7 +9,7 @@ typedef struct framebuffer_info {
     uint32_t width;
     uint32_t height;
     uint32_t pitch;
-    void * buf;
+    uint16_t * buf;
     uint32_t buf_size;
     uint32_t chars_width;
     uint32_t chars_height;

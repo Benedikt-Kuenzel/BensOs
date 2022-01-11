@@ -14,20 +14,20 @@ One of these devices being the gpu's framebuffer.
 mail_message_t mailbox_read(int channel) {
     mail_status_t stat;
     mail_message_t res;
-
+unsigned int ra;
     do{
        // Make sure there is mail to recieve
        do {
-           stat = *((mail_status_t *) 0x3F000000 + 0xB880 + 0x18);
-       } while (stat.empty);
+            ra= *((unsigned int*) (0x3F00B880 + 0x18));
+       } while ((ra&0x40000000)== 1);
        // Get the message
 //TODO: CHECK IF CHANNEL IS CORRECT
         uart_puts("invalid channel\n"); 
-        res = *((mail_message_t *) 0x3F000000 + 0xB880);
+        ra= *((unsigned int *) (0x3F00B880 ));
 
-    } while (res.channel != channel);
+    } while ((ra&0xF)!=channel);
 
-
+res = *((mail_message_t *) (0x3F00B880 ));
         uart_puts("received\n"); 
     return res;
 }
@@ -39,10 +39,10 @@ void mailbox_send(mail_message_t msg, int channel) {
 
     // Make sure you can send mail
     do {
-        stat = *((mail_status_t *) 0x3F000000 + 0xB880 + 0x18);
+        stat = *((mail_status_t *) (0x3F00B880  + 0x18));
     } while (stat.full);
     // send the message
-    *((mail_message_t *) 0x3F000000 + 0xB880 + 0x20) = msg;
+    *((mail_message_t *) (0x3F00B880  + 0x20)) = msg;
     uart_puts("sent \n"); 
 }
 

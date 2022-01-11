@@ -9,8 +9,9 @@
 
 
 
+
 void write_pixel(uint32_t x, uint32_t y, const pixel_t * pix) {
-    uint8_t * location = fbinfo.buf + y*fbinfo.pitch + x*BYTES_PER_PIXEL;
+    uint16_t * location = fbinfo.buf + y*fbinfo.pitch + x*BYTES_PER_PIXEL;
     memcpy(location, pix, BYTES_PER_PIXEL);
 }
 
@@ -64,10 +65,10 @@ void gpu_puts(const char* str)
 }
 
 void gpu_init(void) {
-    static const pixel_t BLACK = {0xff, 0xff, 0xff};//{0x00, 0x00, 0x00};
+    static const pixel_t BLACK = {0x00, 0x00, 0x00};
     // Aparantly, this sometimes does not work, so try in a loop
     //while(framebuffer_init());
-    property_message_tag_t tags[5];
+       property_message_tag_t tags[5];
 
     uart_puts("Initializing Framebuf\n");
     tags[0].proptag = FB_SET_PHYSICAL_DIMENSIONS;
@@ -87,7 +88,7 @@ void gpu_init(void) {
         return -1;
     }
 
-    uart_puts("Framebuf 0 \n");
+   
     fbinfo.width = tags[0].value_buffer.fb_screen_size.width;
     fbinfo.height = tags[0].value_buffer.fb_screen_size.height;
     fbinfo.chars_width = fbinfo.width / CHAR_WIDTH;
@@ -109,11 +110,9 @@ void gpu_init(void) {
         return -1;
     }
 
-    fbinfo.buf = (void *)0x04100000;//tags[0].value_buffer.fb_allocate_res.fb_addr;
-    fbinfo.buf_size =  640 * 480;//tags[0].value_buffer.fb_allocate_res.fb_size;
-    fbinfo.width = 640;
-    fbinfo.height = 480;
-    fbinfo.pitch = fbinfo.width*BYTES_PER_PIXEL;
+    fbinfo.buf = tags[0].value_buffer.fb_allocate_res.fb_addr;
+    fbinfo.buf_size =  tags[0].value_buffer.fb_allocate_res.fb_size;
+  
     uart_puts("Framebuf initialized\n");
 
     // clear screen
@@ -122,4 +121,5 @@ void gpu_init(void) {
             write_pixel(i,j,&BLACK);
         }
     }
+    
 }
