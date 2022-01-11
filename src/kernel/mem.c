@@ -26,6 +26,36 @@ IMPLEMENT_LIST(page);
 static page_t * all_pages_array; //points to the page metadata array
 page_list_t free_pages; //the pages that are currently free
 
+/**
+ * Heap Stuff
+ */
+
+/**
+ * impliment kmalloc as a linked list of allocated segments.
+ * Segments should be 4 byte aligned.
+ * Use best fit algorithm to find an allocation
+ */
+typedef struct heap_segment{
+    struct heap_segment * next;
+    struct heap_segment * prev;
+    uint32_t is_allocated;
+    uint32_t segment_size;  // Includes this header
+} heap_segment_t;
+
+static heap_segment_t * heap_segment_list_head;
+
+/**
+ * End Heap Stuff
+ */
+
+
+static void heap_init(uint32_t heap_start) {
+   heap_segment_list_head = (heap_segment_t *) heap_start;
+   bzero(heap_segment_list_head, sizeof(heap_segment_t));
+   heap_segment_list_head->segment_size = KERNEL_HEAP_SIZE;
+}
+
+
 void mem_init (atag_t * atags){
     uint32_t mem_size, page_array_len, kernel_pages, page_array_end, i;
 
@@ -90,34 +120,8 @@ void free_page(void * ptr) {
     append_page_list(&free_pages, page);
 }
 
-/**
- * Heap Stuff
- */
-
-/**
- * impliment kmalloc as a linked list of allocated segments.
- * Segments should be 4 byte aligned.
- * Use best fit algorithm to find an allocation
- */
-typedef struct heap_segment{
-    struct heap_segment * next;
-    struct heap_segment * prev;
-    uint32_t is_allocated;
-    uint32_t segment_size;  // Includes this header
-} heap_segment_t;
-
-static heap_segment_t * heap_segment_list_head;
-
-/**
- * End Heap Stuff
- */
 
 
-static void heap_init(uint32_t heap_start) {
-   heap_segment_list_head = (heap_segment_t *) heap_start;
-   bzero(heap_segment_list_head, sizeof(heap_segment_t));
-   heap_segment_list_head->segment_size = KERNEL_HEAP_SIZE;
-}
 
 
 void * kmalloc(uint32_t bytes) {

@@ -1,6 +1,7 @@
 #include "kernel/mailbox.h"
 #include <kernel/mem.h>
 #include <common/stdlib.h>
+#include "kernel/uart.h"
 
 /*
 A channel tells the GPU what the sent and read data means.
@@ -21,14 +22,13 @@ mail_message_t mailbox_read(int channel) {
        } while (stat.empty);
        // Get the message
 //TODO: CHECK IF CHANNEL IS CORRECT
-
+        uart_puts("invalid channel\n"); 
         res = *((mail_message_t *) 0x3F000000 + 0xB880);
 
     } while (res.channel != channel);
 
 
         uart_puts("received\n"); 
-        uart_puts(res); 
     return res;
 }
 

@@ -2,10 +2,12 @@
 #include <stdint.h>
 #include "kernel/uart.h"
 #include "kernel/mem.h"
-#include "common/stdlib.h"
-#include "common/stdio.h"
 #include <kernel/kerio.h>
 #include <kernel/gpu.h>
+#include "common/stdlib.h"
+#include "common/stdio.h"
+
+
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags)
 {

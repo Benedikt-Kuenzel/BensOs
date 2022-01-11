@@ -26,4 +26,5 @@ uint32_t integer_to_string(char *buf, size_t bufsize, int n);
 void bzero(void * dest, int bytes);
 char * itoa(int num, int base);
 int atoi(char * num);
+void memcpy(void * dest, const void * src, int bytes);
 #endif
