@@ -10,6 +10,9 @@ char getc(void) {
     return uart_getc();
 }
 
+void puti(int i){
+    puts(itoa(i, 10));
+}
 void putc(char c) {
     uart_putc(c);
     

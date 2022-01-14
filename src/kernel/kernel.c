@@ -6,6 +6,18 @@
 #include <kernel/gpu.h>
 #include "common/stdlib.h"
 #include "common/stdio.h"
+#include "kernel/timer.h"
+
+
+
+void test(void) {
+    int i = 0;
+    while (1) {
+        puts("test \n");
+        udelay(1000000);
+    }
+}
+
 
 
 
@@ -21,12 +33,26 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags)
     mem_init((atag_t *)atags);
     gpu_init();
 
+   
+    
+    initExceptions();
+    puts("Exception Vectors Initialized.\n");
+
+
+    timer_init();
+    puts("Timer initialized.\n");
+
+    process_init();
+    puts("Processes initialized.\n");
+
     puts("Booted.\n");
     puts("Welcome to Ben's OS!\n");
-    
+
+    create_kernel_thread(test, "TEST", 4);
+
 
     while (1) {
-        uart_putc(uart_getc());
-        uart_putc('\n');
+        puts("main \n");
+        udelay(1000000);
     }
 }

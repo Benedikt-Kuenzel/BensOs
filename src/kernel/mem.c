@@ -1,35 +1,13 @@
-
-#include <stddef.h>
+#include <kernel/mem.h>
+#include <common/stdlib.h>
 #include <stdint.h>
-#include "common/stdlib.h"
-#include "kernel/mem.h"
+#include <stddef.h>
 #include "kernel/uart.h"
-
-typedef struct{
-    uint8_t allocated: 1;
-    uint8_t kernel_page: 1;
-    uint32_t reserved: 30;
-} page_flags_t;
-
-typedef struct page{
-    uint32_t vaddr_mapped; //virtual addr. that maps to this page;
-    page_flags_t flags;
-    DEFINE_LINK(page);
-} page_t;
-
-extern uint8_t __end; //the end  address of kernel memory
-static uint32_t num_pages; //the amount of pages created;
-
-DEFINE_LIST(page);
-IMPLEMENT_LIST(page);
-
-static page_t * all_pages_array; //points to the page metadata array
-page_list_t free_pages; //the pages that are currently free
 
 /**
  * Heap Stuff
  */
-
+static void heap_init(uint32_t heap_start);
 /**
  * impliment kmalloc as a linked list of allocated segments.
  * Segments should be 4 byte aligned.
@@ -49,42 +27,62 @@ static heap_segment_t * heap_segment_list_head;
  */
 
 
-static void heap_init(uint32_t heap_start) {
-   heap_segment_list_head = (heap_segment_t *) heap_start;
-   bzero(heap_segment_list_head, sizeof(heap_segment_t));
-   heap_segment_list_head->segment_size = KERNEL_HEAP_SIZE;
-}
+extern uint8_t __end;
+static uint32_t num_pages;
+
+IMPLEMENT_LIST(page);
+
+static page_t * all_pages_array;
+page_list_t free_pages;
 
 
-void mem_init (atag_t * atags){
+
+void mem_init(atag_t * atags) {
     uint32_t mem_size, page_array_len, kernel_pages, page_array_end, i;
 
+    // Get the total number of pages
     mem_size = get_mem_size(atags);
     num_pages = mem_size / PAGE_SIZE;
 
-    page_array_len  = num_pages * sizeof(page_t);
-    all_pages_array = (page_t *) &__end;
-    bzero(all_pages_array,page_array_len);
+    // Allocate space for all those pages' metadata.  Start this block just after the stack
+    page_array_len = sizeof(page_t) * num_pages;
+    all_pages_array = (page_t *)((uint32_t)&__end + KERNEL_STACK_SIZE);
+    bzero(all_pages_array, page_array_len);
     INITIALIZE_LIST(free_pages);
+    
+    // Find where the page metadata ends and round up to the nearest page
+    page_array_end = (uint32_t)all_pages_array + page_array_len;
+    page_array_end += page_array_end % PAGE_SIZE ? PAGE_SIZE - (page_array_end % PAGE_SIZE) : 0;
 
-	page_array_end = (uint32_t)all_pages_array + page_array_len;
-	page_array_end += page_array_end % PAGE_SIZE  ? PAGE_SIZE- (page_array_end % PAGE_SIZE) : 0;
-
-    kernel_pages = ((uint32_t)&__end) /PAGE_SIZE;
-    for(i = 0; i < kernel_pages; i++){
-        all_pages_array[i].vaddr_mapped = i * PAGE_SIZE;
-        all_pages_array[i].flags.allocated =  1;
+    // Iterate over all pages and mark them with the appropriate flags
+    // Start with kernel pages, stacks, and page metadata
+    kernel_pages = (page_array_end) / PAGE_SIZE;
+    for (i = 0; i < kernel_pages; i++) {
+        all_pages_array[i].vaddr_mapped = i * PAGE_SIZE;    // Identity map the kernel pages
+        all_pages_array[i].flags.allocated = 1;
         all_pages_array[i].flags.kernel_page = 1;
     }
-
-    for(; i < num_pages;  i++){
-        //all_pages_array[i].vaddr_mapped = i * PAGE_SIZE;
-        all_pages_array[i].flags.allocated =  0;
-        //all_pages_array[i].flags.kernel_page = 0;
+     uart_puts(itoa(i,10));
+     uart_puts("\n");
+    // Reserve 1 MB for the kernel heap
+    for(; i < kernel_pages + (KERNEL_HEAP_SIZE / PAGE_SIZE); i++){
+        all_pages_array[i].vaddr_mapped = i * PAGE_SIZE;    // Identity map the kernel pages
+        all_pages_array[i].flags.allocated = 1;
+        all_pages_array[i].flags.kernel_heap_page = 1;
+    }
+    uart_puts(itoa(i,10));
+    uart_puts("\n");
+    // Map the rest of the pages as unallocated, and add them to the free list
+    for(; i < num_pages; i++){
+        all_pages_array[i].flags.allocated = 0;
         append_page_list(&free_pages, &all_pages_array[i]);
     }
-    
+uart_puts(itoa(i,10));
+uart_puts("\n");
+
+    // Initialize the heap
     heap_init(page_array_end);
+
 }
 
 void * alloc_page(void) {
@@ -121,31 +119,39 @@ void free_page(void * ptr) {
 }
 
 
-
+static void heap_init(uint32_t heap_start) {
+   heap_segment_list_head = (heap_segment_t *) heap_start;
+   bzero(heap_segment_list_head, sizeof(heap_segment_t));
+   heap_segment_list_head->segment_size = KERNEL_HEAP_SIZE;
+}
 
 
 void * kmalloc(uint32_t bytes) {
     heap_segment_t * curr, *best = NULL;
     int diff, best_diff = 0x7fffffff; // Max signed int
 
-    // Add the header to the number of bytes we need and make the size 4 byte aligned
+    // Add the header to the number of bytes we need and make the size 16 byte aligned
     bytes += sizeof(heap_segment_t);
     bytes += bytes % 16 ? 16 - (bytes % 16) : 0;
 
     // Find the allocation that is closest in size to this request
     for (curr = heap_segment_list_head; curr != NULL; curr = curr->next) {
         diff = curr->segment_size - bytes;
+
+ 
         if (!curr->is_allocated && diff < best_diff && diff >= 0) {
             best = curr;
             best_diff = diff;
         }
     }
+    
 
     // There must be no free memory right now :(
     if (best == NULL){
-    	uart_puts("NO free memory\n");
+        uart_puts("No free memory!");
         return NULL;
-	}
+    }
+
     // If the best difference we could come up with was large, split up this segment into two.
     // Since our segment headers are rather large, the criterion for splitting the segment is that
     // when split, the segment not being requested should be twice a header size
@@ -161,7 +167,7 @@ void * kmalloc(uint32_t bytes) {
 
     best->is_allocated = 1;
 
-    return best + 1;
+    return best->next + 1;
 }
 
 void kfree(void *ptr) {
@@ -185,5 +191,6 @@ void kfree(void *ptr) {
         seg->next->next->prev = seg;
         seg->next = seg->next->next;
         seg->segment_size += seg->next->segment_size;
+        seg = seg->next;
     }
 }

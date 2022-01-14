@@ -56,4 +56,7 @@ clean:
 	rm $(IMG_NAME)
 
 run: build
-	qemu-system-arm -m 1024 -no-reboot -M raspi2 -serial stdio -kernel kernel.img 
+	qemu-system-arm -m 1024 -no-reboot -M raspi2 -serial stdio -kernel kernel.img -netdev user,id=net0 -usb -device usb-net,netdev=net0
+
+
+#-device usb-kbd -device usb-tablet 
