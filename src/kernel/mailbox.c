@@ -19,6 +19,7 @@ unsigned int ra;
        // Make sure there is mail to recieve
        do {
             ra= *((unsigned int*) (0x3F00B880 + 0x18));
+            uart_puts("empty\n"); 
        } while ((ra&0x40000000)== 1);
        // Get the message
 //TODO: CHECK IF CHANNEL IS CORRECT
@@ -40,6 +41,8 @@ void mailbox_send(mail_message_t msg, int channel) {
     // Make sure you can send mail
     do {
         stat = *((mail_status_t *) (0x3F00B880  + 0x18));
+
+         uart_puts("full \n"); 
     } while (stat.full);
     // send the message
     *((mail_message_t *) (0x3F00B880  + 0x20)) = msg;

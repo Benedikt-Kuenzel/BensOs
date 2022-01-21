@@ -23,6 +23,25 @@ typedef struct {
     uint32_t lr;
 } proc_saved_state_t;
 
+typedef struct __attribute__((packed)) 
+{
+    uint32_t cirgn: 1; //cachable bit
+    uint32_t s :1; //sharable bit
+    uint32_t r1 : 1; //reserved
+    uint32_t rgn: 2; //region bits
+    uint32_t nos : 1; // not outer sharable bit
+    uint32_t irgn: 1; // inner region bit 0
+    uint32_t r2 : 7; //reserved 
+    uint32_t baddr :18 ;//translation table base adress
+}    ttbr0_entry_t;
+
+
+
+typedef struct {
+    uint32_t reserved: 30;
+    uint8_t empty: 1;
+    uint8_t full:1;
+} page_directory_entry_t;
 
 DEFINE_LIST(pcb);
 
@@ -32,9 +51,9 @@ typedef struct pcb {
     uint32_t pid;                     // The process ID number
     DEFINE_LINK(pcb);
     char proc_name[20];               // The process's name
+    ttbr0_entry_t* ttbr_entry;              //The ttbr so the tlb has the right adress to the page directory
 } process_control_block_t;
 
-process_control_block_t * current_process;
 
 typedef void (*main_func_pointer)(void);
 

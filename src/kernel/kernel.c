@@ -7,9 +7,11 @@
 #include "common/stdlib.h"
 #include "common/stdio.h"
 #include "kernel/timer.h"
+#include "kernel/process.h"
 
-
-
+void hello(){
+    puts("hello");
+}
 void test(void) {
     int i = 0;
     while (1) {
@@ -18,7 +20,8 @@ void test(void) {
     }
 }
 
-
+extern void init_ttbr(int  ttbr);
+extern void init_ttbcr(void);
 
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags)
@@ -50,6 +53,22 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags)
 
     create_kernel_thread(test, "TEST", 4);
 
+    ttbr0_entry_t  ttbr_entry;
+    ttbr_entry.baddr =0x2aaa;
+    ttbr_entry.nos = 1;
+    ttbr_entry.cirgn = 1;
+    ttbr_entry.irgn = 1;
+    ttbr_entry.rgn = 3;
+    ttbr_entry.r2 = 127;
+    int32_t ttbr_int;
+    memcpy(&ttbr_int, &ttbr_entry, sizeof(ttbr0_entry_t));
+
+   puts(itoa(ttbr_int, 2));
+    puti(sizeof(ttbr0_entry_t));
+
+
+    init_ttbcr();
+    init_ttbr(ttbr_int);
 
     while (1) {
         puts("main \n");
