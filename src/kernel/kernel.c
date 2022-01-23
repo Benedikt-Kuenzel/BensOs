@@ -43,12 +43,13 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags)
     process_init();
     puts("Processes initialized.\n");
 
-    puts("Booted.\n");
-    puts("Welcome to Ben's OS!\n");
 
 
     paging_enable_with_identitymapping();
 
+
+    puts("Booted.\n");
+    puts("Welcome to Ben's OS!\n");
     
     create_kernel_thread(test, "TEST", 4);
 

@@ -33,11 +33,11 @@ typedef struct __attribute__((packed))
     uint32_t rgn: 2; //region bits
     uint32_t nos : 1; // not outer sharable bit
     uint32_t irgn: 1; // inner region bit 0
-    uint32_t r2 : 5; //reserved 
-    uint32_t baddr :20 ;//translation table base adress
+    uint32_t r2 : 7; //sbz
+    uint32_t baddr :18 ;//translation table base adress
 }    ttbr0_entry_t;
 
-//this must be 2^12 byte aligned
+//this must be 2^14 byte aligned
 typedef struct __attribute__((packed))  {
     uint32_t bit0 : 1;
     uint32_t bit1 : 1;
@@ -63,8 +63,8 @@ typedef struct __attribute__((packed)) {
     uint32_t baddr: 20; //points to actual page base addr. 
 } page_table_entry_t;
 
-int32_t identy_pagedir_page_addr;
-int32_t identy_pagetable_page_addr;
+uint32_t identy_pagedir_page_addr;
+uint32_t identy_pagetable_page_addr;
 
 void mem_init(atag_t * atags);
 
