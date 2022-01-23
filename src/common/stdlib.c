@@ -102,7 +102,7 @@ void bzero(void * dest, int bytes) {
 
 void memcpy(void * dest, const void * src, int bytes) {
     char * d = dest;
-    const char * s = src;
+    char * s = src;
     while (bytes--) {
         *d++ = *s++;
     }

@@ -4,6 +4,9 @@
 #include <stddef.h>
 #include "kernel/uart.h"
 
+
+
+
 /**
  * Heap Stuff
  */
@@ -88,7 +91,6 @@ uart_puts("\n");
 void * alloc_page(void) {
     page_t * page;
     void * page_mem;
-
 
     if (size_page_list(&free_pages) == 0)
         return 0;
@@ -193,4 +195,93 @@ void kfree(void *ptr) {
         seg->segment_size += seg->next->segment_size;
         seg = seg->next;
     }
+}
+
+
+/*
+
+PAGING
+
+*/
+
+extern void enable_mmu(void);
+extern void init_ttbr(int  ttbr);
+extern void init_ttbcr(void);
+
+
+void paging_enable_with_identitymapping(void){
+
+    identy_pagedir_page_addr = alloc_page();
+    identy_pagetable_page_addr = 0;
+
+    page_directory_entry_t  page_dir_entry;
+    page_table_entry_t table_entry;
+   
+    for(unsigned int i = 0;  4096 > i; i++){
+        if(i % 4 == 0)
+            identy_pagetable_page_addr = alloc_page();
+
+        
+        
+        page_dir_entry.bit0 = 1;
+        page_dir_entry.bit1 = 0;
+        page_dir_entry.pxn = 0;
+        page_dir_entry.ns = 0;
+        page_dir_entry.sbz = 1;
+        page_dir_entry.domain = 0b11; //manager access
+        page_dir_entry.imp = 0;
+        page_dir_entry.baddr = (identy_pagetable_page_addr + ((i % 4) * 1024)) >> 10; //align to 10bits
+        
+        int32_t * dest = identy_pagedir_page_addr + (i );
+        int32_t * src = &page_dir_entry;
+        
+        *dest = *src;
+        for(unsigned int k = 0; 256 > k; k++){
+
+            table_entry.xn = 0;
+            table_entry.bit1 = 1;
+            table_entry.b = 0;
+            table_entry.c = 0;
+            table_entry.ap = 0b11;
+            table_entry.tex = 0b000;
+            table_entry.ap2 = 0;
+            table_entry.s = 0;
+            table_entry.ng = 1;
+            table_entry.baddr = (((i*256) + k) * 4096)>> 12 ;
+
+            int32_t * dest2 = (identy_pagetable_page_addr + ((i % 4) * 1024)) + (k );
+            int32_t * src2 = &table_entry;
+            
+                
+            *dest2 = *src2;
+        }
+  
+    }
+
+ puts(itoa(table_entry.baddr,2));
+   
+
+    ttbr0_entry_t  ttbr_entry;
+
+    ttbr_entry.nos = 0;
+    ttbr_entry.rgn = 0b00;
+    ttbr_entry.r1 = 0;
+    ttbr_entry.s = 0;
+    ttbr_entry.cirgn  = 0;
+    ttbr_entry.r2 = 0;
+    ttbr_entry.baddr = identy_pagedir_page_addr >> 12;
+    
+    int32_t ttbr_int;
+
+
+    memcpy(&ttbr_int, &ttbr_entry, sizeof(ttbr0_entry_t));
+
+    //puts(itoa(ttbr_int, 2));
+    //puti(sizeof(ttbr0_entry_t));
+       puts("kappa");
+
+    init_ttbcr();
+    init_ttbr(ttbr_int);
+
+    enable_mmu();
 }
