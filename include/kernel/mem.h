@@ -33,8 +33,8 @@ typedef struct __attribute__((packed))
     uint32_t rgn: 2; //region bits
     uint32_t nos : 1; // not outer sharable bit
     uint32_t irgn: 1; // inner region bit 0
-    uint32_t r2 : 7; //sbz
-    uint32_t baddr :18 ;//translation table base adress
+    uint32_t r2 : 6; //sbz
+    uint32_t baddr :19 ;//translation table base adress
 }    ttbr0_entry_t;
 
 //this must be 2^14 byte aligned

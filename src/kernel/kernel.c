@@ -45,7 +45,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags)
 
 
 
-    paging_enable_with_identitymapping();
+    //paging_enable_with_identitymapping();
 
 
     puts("Booted.\n");

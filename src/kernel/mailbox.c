@@ -111,7 +111,7 @@ int send_messages(property_message_tag_t * tags) {
     mail.data = ((uint32_t)msg) >>4;
     
     mailbox_send(mail, PROPERTY_CHANNEL);
-    mail = mailbox_read(PROPERTY_CHANNEL);
+   // mail = mailbox_read(PROPERTY_CHANNEL);
 
 
     if (msg->req_res_code == REQUEST) {

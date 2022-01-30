@@ -1,4 +1,4 @@
-.section ".text"
+.section ".lowtext"
 
 .global init_ttbcr
 .global init_ttbr
@@ -19,42 +19,48 @@ init_ttbr:
     //MCR     p15, 0, r0, c2, c0, 1 
     blx lr
 
-//void enable_mmu(int32_t ttbr0_entry)
+//void enable_mmu(int32_t ttbr0_entry, int32_t ttbr1_entry)
 //this just flips bit [0] of the system control register (sctlr) to 1
 //which enables the mmu
 enable_mmu: 
     //init ttbcr, specifically ttbcr.n				/* Read TTBCR into R0 */
-    mov r1, #0b000								/* Set N = 1 */						
-    MCR p15, 0, r1, c2, c0, 2
+    mov r2, #0b001								/* Set N = 1 */						
+    MCR p15, 0, r2, c2, c0, 2
 
     /* Set the access control to all-supervisor */
     //mov r0, #~0
     //mcr p15, 0, r0, c3, c0, 0
 
-    mov r1,#0
+    mov r2,#0
     // invalidate caches
-    mcr p15,0,r1,c7,c7,0 
+    mcr p15,0,r2,c7,c7,0 
     // invalidate TLB entries
-    mcr p15,0,r1,c8,c7,0 
+    mcr p15,0,r2,c8,c7,0 
     // data synchronisation barrier
-    mcr p15,0,r1,c7,c10,4 
+    mcr p15,0,r2,c7,c10,4 
 
     // set all domains to 0b11
-    ldr r1, =0xffffffff
-    mcr p15,0,r1,c3,c0,0
+    ldr r2, =0xffffffff
+    mcr p15,0,r2,c3,c0,0
 
-    //write the base adress of translation table 1
+    
+    //write the base adress of translation table 0
     //into ttbcr0
     MCR     p15, 0, r0, c2, c0, 0
     isb
+    
+    //write the base adress of translation table 1
+    //into ttbcr1
+    MCR     p15, 0, r1, c2, c0, 1
+    isb
 
-
+    //enable paging
     mrc p15, 0, r12, c1, c0, 0
     orr r12, r12, #0x1
     mcr p15, 0, r12, c1, c0, 0
     isb
-
-    blx lr
+    
+    blx  lr
 
 
 tlb_invalidate:

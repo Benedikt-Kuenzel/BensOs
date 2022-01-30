@@ -36,7 +36,7 @@ static uint32_t num_pages;
 IMPLEMENT_LIST(page);
 
 static page_t * all_pages_array;
-page_list_t free_pages;
+static page_list_t free_pages;
 
 
 
@@ -205,7 +205,7 @@ PAGING
 
 */
 
-extern void enable_mmu(uint32_t ttbr0_entry);
+extern void enable_mmu(uint32_t ttbr0_entry, uint32_t ttbr1_entry);
 extern void disable_mmu(void);
 extern void init_ttbr(int  ttbr);
 extern void init_ttbcr(void);
@@ -213,17 +213,17 @@ extern void init_ttbcr(void);
 
 void paging_enable_with_identitymapping(void){
 
-    identy_pagedir_page_addr = 0x10004000;
+    identy_pagedir_page_addr = 0x10004000 ;
     identy_pagetable_page_addr;
 
     page_directory_entry_t  page_dir_entry;
     page_table_entry_t table_entry;
-   
-    for(uint32_t i = 0;  4096 > i; i++){
+    uint32_t i;
+    for(i = 0;  4096 /2> i; i++){
+       
         if(i % 4 == 0)
             identy_pagetable_page_addr = alloc_page();
 
-        
         
         page_dir_entry.bit0 = 1;
         page_dir_entry.bit1 = 0;
@@ -237,10 +237,9 @@ void paging_enable_with_identitymapping(void){
 
         uint32_t * dest = identy_pagedir_page_addr + (i * sizeof(page_directory_entry_t ));
         uint32_t * src = &page_dir_entry;
-        
-
         *dest = *src;
-        for(uint32_t k = 0; 256 > k; k++){
+
+           for(uint32_t k = 0; 256 > k; k++){
 
             table_entry.xn = 0;
             table_entry.bit1 = 1;
@@ -270,14 +269,77 @@ void paging_enable_with_identitymapping(void){
     ttbr_entry.s = 0;
     ttbr_entry.cirgn  = 0;
     ttbr_entry.r2 = 0;
-    ttbr_entry.baddr = identy_pagedir_page_addr >> 14;
+    ttbr_entry.baddr = identy_pagedir_page_addr >> 13;
     
     uint32_t ttbr_int ;
     memcpy(&ttbr_int, &ttbr_entry, sizeof(ttbr0_entry_t));
+
+    identy_pagedir_page_addr += (4096 * 4); //align to 16kb boundary for ttbr1
+     
+    for(; 4096> i; i++ ){
+        if(i % 4 == 0)
+            identy_pagetable_page_addr = alloc_page();
+
+        
+        page_dir_entry.bit0 = 1;
+        page_dir_entry.bit1 = 0;
+        page_dir_entry.pxn = 0;
+        page_dir_entry.ns = 0;
+        page_dir_entry.sbz = 0;
+        page_dir_entry.domain = 0xF; //manager access
+        page_dir_entry.imp = 0;
+        page_dir_entry.baddr = (identy_pagetable_page_addr + ((i % 4) * 1024)) >> 10; //align to 10bits
+      
+
+        uint32_t * dest = identy_pagedir_page_addr + (i * sizeof(page_directory_entry_t ));
+        uint32_t * src = &page_dir_entry;
+        
+
+        *dest = *src;
+     
+       
+            for(uint32_t k = 0; 256 > k; k++){
+            
+                table_entry.xn = 0;
+                table_entry.bit1 = 1;
+                table_entry.b = 0;
+                table_entry.c = 0;
+                table_entry.ap = 0b11;
+                table_entry.tex = 0b000;
+                table_entry.ap2 = 1;
+                table_entry.s = 0;
+                table_entry.ng = 0;
+                 if((i * 256) + k  >= (0xC0000000 / 4096))
+                    table_entry.baddr = ((i*256) + k) - 786432;
+                else
+                    table_entry.baddr = ((i*256) + k) ;
     
+                uint32_t * dest2 = (identy_pagetable_page_addr + ((i % 4) * 1024)) + (k  * sizeof(page_table_entry_t));
+                uint32_t * src2 = &table_entry;
+                
+                    
+                *dest2 = *src2;
+            }
+    }
+    
+    ttbr0_entry_t ttbr1_entry;
+
+
+    ttbr1_entry.nos = 0;
+    ttbr1_entry.rgn = 0b00;
+    ttbr1_entry.r1 = 0;
+    ttbr1_entry.s = 0;
+    ttbr1_entry.cirgn  = 0;
+    ttbr1_entry.r2 = 0;
+    ttbr1_entry.baddr = identy_pagedir_page_addr >> 14;
+
+
+    uint32_t ttbr1_int ;
+    memcpy(&ttbr1_int, &ttbr1_entry, sizeof(ttbr0_entry_t));
+
     puts("Page directory created\n");
     puts("Page tables created\n");
     puts("Initializing MMU with identiy mapping...\n");
-    enable_mmu(ttbr_int);
+    enable_mmu(ttbr_int, ttbr1_int);
     puts("MMU initialized.\n");
 }

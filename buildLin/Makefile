@@ -9,7 +9,7 @@ CPU = cortex-a7
 ARCHDIR = model2
 
 
-CFLAGS= -mcpu=$(CPU) -fpic -ffreestanding $(DIRECTIVES)
+CFLAGS= -mcpu=$(CPU) -fpic -ffreestanding $(DIRECTIVES)  -ggdb
 CSRCFLAGS= -O2 -Wall -Wextra
 LFLAGS= -ffreestanding -O2 -nostdlib
 
@@ -56,4 +56,4 @@ clean:
 	rm $(IMG_NAME)
 
 run: build
-	qemu-system-arm -s  -m 1024 -no-reboot -M raspi2 -serial stdio -kernel kernel.img -netdev user,id=net0 -usb -device usb-net,netdev=net0 -device usb-kbd -device usb-tablet 
+	qemu-system-arm -s  -S -m 1024 -no-reboot -M raspi2 -serial stdio -kernel kernel.img -netdev user,id=net0 -usb -device usb-net,netdev=net0 -device usb-kbd -device usb-tablet 

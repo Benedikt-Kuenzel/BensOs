@@ -1,6 +1,8 @@
-.section ".text.boot"
+
+.section ".lowtext.boot"
 
 .global _start
+
 
 _start:
     mrc p15, #0, r1, c0, c0, #5
@@ -10,8 +12,8 @@ _start:
 
     mov sp, #0x8000
 
-    ldr r4, =__bss_start
-    ldr r9, =__bss_end
+    ldr r4, =__bsss_start
+    ldr r9, =__bsss_end
     mov r5, #0
     mov r6, #0
     mov r7, #0
@@ -22,10 +24,14 @@ _start:
     stmia r4!, {r5-r8}
 
 2:
+    
     cmp r4, r9
     blo 1b
 
-    ldr r3, =kernel_main
+    ldr r3, = early_init
+    blx r3
+
+    ldr r3, = kernel_main
     blx r3
 
 halt:

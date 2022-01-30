@@ -13,7 +13,7 @@ uint32_t mmio_read(uint32_t reg)
 }
 
 // Loop <delay> times in a way that the compiler won't optimize away
- void delay(int32_t count)
+void delay(int32_t count)
 {
     asm volatile("__delay_%=: subs %[count], %[count], #1; bne __delay_%=\n"
             : "=r"(count): [count]"0"(count) : "cc");
@@ -52,7 +52,7 @@ void uart_putc(unsigned char c)
     mmio_write(UART0_DR, c);
 }
 
-unsigned char uart_getc()
+__attribute__ ((section(".lowtext"))) unsigned char uart_getc()
 {
     while ( mmio_read(UART0_FR) & (1 << 4) ) { }
     return mmio_read(UART0_DR);
